@@ -53,7 +53,7 @@ export default function LoginPage() {
       dispatch(
         setUser({
           accessToken: data.data.accessToken,
-          id: data.data.user.id,
+          // id: data.data.user.id,
           user: data.data.user,
         })
       );

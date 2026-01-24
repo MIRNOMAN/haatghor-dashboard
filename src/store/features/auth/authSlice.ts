@@ -22,12 +22,12 @@ const authSlice = createSlice({
       action: PayloadAction<{
         accessToken: string
         user: TUser
-        id: string
+        // id: string
       }>
     ) => {
       state.accessToken = action.payload.accessToken
       state.user = action.payload.user
-      state.id = action.payload.id
+      // state.id = action.payload.id
     },
 
     logout: (state) => {

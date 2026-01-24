@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -45,12 +46,15 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Users as UsersIcon, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { TUser } from "@/types";
+import { PaginationWithParams } from "@/utils/PaginationWithParams";
 
 export default function UsersPage() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
+  const searchParams = useSearchParams();
+  const page = Number(searchParams.get("page") || 1);
+ 
   const [search, setSearch] = useState("");
   const [editingUser, setEditingUser] = useState<TUser | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -61,8 +65,8 @@ export default function UsersPage() {
   const [updateUserRole, { isLoading: isUpdatingRole }] = useUpdateUserRoleMutation();
   const [updateUserStatus, { isLoading: isUpdatingStatus }] = useUpdateUserStatusMutation();
 
-  const users = data?.data?.result || [];
-  const meta = data?.data?.meta;
+  const users = data?.data || [];
+  const totalPages = data?.meta?.totalPage ?? 0;
 
   const handleOpenDialog = (user: TUser) => {
     setEditingUser(user);
@@ -187,7 +191,7 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {users?.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="font-medium">{user.name}</div>
@@ -225,11 +229,9 @@ export default function UsersPage() {
             </Table>
           </div>
 
-          {meta && meta.totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={meta.totalPages}
-              onPageChange={setPage}
+          {totalPages && totalPages > 1 && (
+            <PaginationWithParams
+              totalPages={totalPages}
             />
           )}
         </>
