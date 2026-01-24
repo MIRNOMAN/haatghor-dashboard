@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SearchBar } from "@/components/dashboard/SearchBar";
-import { Pagination } from "@/components/dashboard/Pagination";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import {
   useGetAllUsersQuery,
@@ -61,13 +60,17 @@ export default function UsersPage() {
   const [userRole, setUserRole] = useState("");
   const [userStatus, setUserStatus] = useState("");
 
-  const { data, isLoading } = useGetAllUsersQuery({ page, limit: 10, search });
+  const { data, isLoading } = useGetAllUsersQuery({
+    page,
+    limit: 10,
+    search: search,
+  });
   const [updateUserRole, { isLoading: isUpdatingRole }] = useUpdateUserRoleMutation();
   const [updateUserStatus, { isLoading: isUpdatingStatus }] = useUpdateUserStatusMutation();
 
   const users = data?.data || [];
-  const totalPages = data?.meta?.totalPage ?? 0;
-
+  const totalPages = data?.meta?.totalPage ?? 1;
+  console.log(search)
   const handleOpenDialog = (user: TUser) => {
     setEditingUser(user);
     setUserRole(user.role);
@@ -183,6 +186,7 @@ export default function UsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Role</TableHead>
@@ -199,8 +203,9 @@ export default function UsersPage() {
                         ID: {user.id.slice(0, 8)}...
                       </div>
                     </TableCell>
+                    <TableCell>{user.firstName} {user.lastName}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone || "—"}</TableCell>
+                    <TableCell>{user.phoneNumber || "—"}</TableCell>
                     <TableCell>{getRoleBadge(user.role)}</TableCell>
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>

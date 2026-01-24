@@ -5,10 +5,11 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
-/* ---------- User Role ---------- */
+/* ---------- User Roles ---------- */
 export const userRole = {
   admin: "admin",
   user: "user",
+  superadmin: "SUPERADMIN",
 } as const;
 
 export type TUserRole = keyof typeof userRole;
@@ -16,30 +17,35 @@ export type TUserRole = keyof typeof userRole;
 /* ---------- User Type ---------- */
 export type TUser = {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  name?: string; // optional combined name
   email: string;
-  role: string;
-  phone?: string;
+  role: TUserRole | string;
+  phoneNumber?: string;
   address?: string;
-  status?: string;
+  status?: "ACTIVE" | "INACTIVE";
   isDeleted?: boolean;
+  profilePhoto?: string | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 };
 
 /* ---------- Login Type ---------- */
-export type T_Login = {
+export type TLogin = {
   _id: string;
   name: string;
   accessToken: string;
-  photos: { thumbnail: string; cover: string };
-  category: string;
-  quantity: number;
-  price: number;
-  stock: number;
-  discount: number;
-  isDeleted: boolean;
-  ratings: number[];
-  createdAt: Date;
-  updatedAt: Date;
+  photos?: { thumbnail: string; cover: string };
+  category?: string;
+  quantity?: number;
+  price?: number;
+  stock?: number;
+  discount?: number;
+  isDeleted?: boolean;
+  ratings?: number[];
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 /* ---------- Query Param ---------- */
@@ -52,13 +58,13 @@ export type TQueryParam = {
 export type TError = {
   data: {
     message: string;
-    stack: string;
+    stack?: string;
     success: boolean;
   };
   status: number;
 };
 
-/* ---------- Meta ---------- */
+/* ---------- Meta Info ---------- */
 export type TMeta = {
   limit: number;
   page: number;
@@ -75,57 +81,40 @@ export type TResponse<T> = {
   message: string;
 };
 
-export type T_ApiResponse<T> = {
+/* ---------- API Response ---------- */
+export type TApiResponse<T> = {
   success: boolean;
   message: string;
   data: T;
 };
 
 /* ---------- API Response with Pagination ---------- */
-export type T_ApiResponseMeta = {
+export type TApiResponseMeta = {
   total: number;
   totalPage: number;
   page: number;
   limit: number;
 };
 
-export type T_ApiResponseForPagination<T> = {
+export type TApiResponseWithPagination<T> = {
   success: boolean;
   message: string;
-  data: {
-    meta: T_ApiResponseMeta;
-    data?: T;
-  };
+  data?: T;
+  meta: TApiResponseMeta;
 };
 
 /* ---------- Error Response ---------- */
-export type T_ErrorSource = {
+export type TErrorSource = {
   path: string;
   message: string;
 };
 
-export interface I_ErrorResponse {
+export interface IErrorResponse {
   data: {
     success: boolean;
     message: string;
     stack?: string;
-    errorSources: T_ErrorSource[];
+    errorSources: TErrorSource[];
   };
   status: number;
 }
-
-/* ---------- Example Usage ---------- */
-const exampleResponse: T_ApiResponseForPagination<TUser[]> = {
-  success: true,
-  message: "Users fetched",
-  data: {
-    meta: { total: 100, totalPage: 10, page: 1, limit: 10 },
-    data: [
-      { id: "1", name: "Alice", email: "alice@example.com", role: "admin" },
-      { id: "2", name: "Bob", email: "bob@example.com", role: "user" },
-    ],
-  },
-};
-
-console.log("Users array length:", exampleResponse.data?.data?.length);
-console.log("Meta info:", exampleResponse.data.meta);

@@ -1,18 +1,19 @@
 import { baseApi } from "@/store/api";
 import { TUser } from "@/types";
-import { T_ApiResponse, T_ApiResponseForPagination } from "@/types";
+import { TApiResponse, TApiResponseWithPagination } from "@/types";
 
 export const usersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Get all users (admin)
     getAllUsers: builder.query<
-      T_ApiResponseForPagination<TUser[]>,
+      TApiResponseWithPagination<TUser[]>,
       { page?: number; limit?: number; search?: string }
     >({
       query: ({ page = 1, limit = 10, search }) => {
         const params = new URLSearchParams({
           page: page.toString(),
           limit: limit.toString(),
+          
         });
         if (search) params.append('search', search);
         
@@ -22,14 +23,14 @@ export const usersApi = baseApi.injectEndpoints({
     }),
 
     // Get user by ID
-    getUserById: builder.query<T_ApiResponse<TUser>, string>({
+    getUserById: builder.query<TApiResponse<TUser>, string>({
       query: (id) => `/users/${id}`,
       providesTags: ['Users'],
     }),
 
     // Update user role
     updateUserRole: builder.mutation<
-      T_ApiResponse<TUser>,
+    TApiResponse<TUser>,
       { id: string; role: string }
     >({
       query: ({ id, role }) => ({
@@ -42,7 +43,7 @@ export const usersApi = baseApi.injectEndpoints({
 
     // Update user status
     updateUserStatus: builder.mutation<
-      T_ApiResponse<TUser>,
+    TApiResponse<TUser>,
       { id: string; status: string }
     >({
       query: ({ id, status }) => ({
@@ -54,7 +55,7 @@ export const usersApi = baseApi.injectEndpoints({
     }),
 
     // Undelete user
-    undeleteUser: builder.mutation<T_ApiResponse<TUser>, string>({
+    undeleteUser: builder.mutation<TApiResponse<TUser>, string>({
       query: (id) => ({
         url: `/users/undelete-user/${id}`,
         method: 'PUT',
