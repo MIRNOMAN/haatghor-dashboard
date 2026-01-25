@@ -55,9 +55,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Edit, Trash2, Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Image as ImageIcon,
+  Loader2,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Banner, CreateBannerInput } from "@/types/banner";
+import Image from "next/image";
 
 export default function BannersPage() {
   const [page, setPage] = useState(1);
@@ -82,7 +91,7 @@ export default function BannersPage() {
   const [createBanner, { isLoading: isCreating }] = useCreateBannerMutation();
   const [updateBanner, { isLoading: isUpdating }] = useUpdateBannerMutation();
 
-  const banners = data?.data?.result || [];
+  const banners = data?.data || [];
   const meta = data?.data?.meta;
 
   const handleDelete = async () => {
@@ -102,14 +111,14 @@ export default function BannersPage() {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
         return;
       }
-      
+
       // Validate file size (10MB)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Image size should not exceed 10MB');
+        toast.error("Image size should not exceed 10MB");
         return;
       }
 
@@ -195,7 +204,8 @@ export default function BannersPage() {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("title", formData.title);
-      if (formData.description) formDataToSend.append("description", formData.description);
+      if (formData.description)
+        formDataToSend.append("description", formData.description);
       if (formData.link) formDataToSend.append("link", formData.link);
       formDataToSend.append("position", formData.position || "TOP");
       formDataToSend.append("status", formData.status || "ACTIVE");
@@ -242,9 +252,7 @@ export default function BannersPage() {
     };
 
     return (
-      <Badge className={colors[position] || "bg-gray-500"}>
-        {position}
-      </Badge>
+      <Badge className={colors[position] || "bg-gray-500"}>{position}</Badge>
     );
   };
 
@@ -283,10 +291,18 @@ export default function BannersPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-8" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8 rounded" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-8" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -310,20 +326,22 @@ export default function BannersPage() {
                 <TableRow>
                   <TableHead>Banner</TableHead>
                   <TableHead>Position</TableHead>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Subtitle</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {banners.map((banner) => (
+                {banners?.map((banner) => (
                   <TableRow key={banner.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-20 rounded bg-muted flex items-center justify-center overflow-hidden">
                           {banner.image ? (
-                            <img
+                            <Image
                               src={banner.image}
+                              height={100}
+                              width={160}
                               alt={banner.title}
                               className="h-full w-full object-cover"
                             />
@@ -340,8 +358,8 @@ export default function BannersPage() {
                       </div>
                     </TableCell>
                     <TableCell>{getPositionBadge(banner.position)}</TableCell>
-                    <TableCell>{banner.order}</TableCell>
-                    <TableCell>{getStatusBadge(banner.status)}</TableCell>
+                    <TableCell>{banner.subtitle}</TableCell>
+                    <TableCell>{getStatusBadge(banner.type)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -455,7 +473,7 @@ export default function BannersPage() {
                   Supported: JPG, PNG, GIF, WebP (Max 10MB)
                 </p>
               </div>
-              
+
               {imagePreview && (
                 <div className="relative w-full h-48 mt-2 border rounded-lg overflow-hidden bg-muted">
                   <img
@@ -482,7 +500,14 @@ export default function BannersPage() {
                 <Select
                   value={formData.position}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, position: value as 'TOP' | 'MIDDLE' | 'BOTTOM' | 'SIDEBAR' })
+                    setFormData({
+                      ...formData,
+                      position: value as
+                        | "TOP"
+                        | "MIDDLE"
+                        | "BOTTOM"
+                        | "SIDEBAR",
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -502,7 +527,10 @@ export default function BannersPage() {
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, status: value as 'ACTIVE' | 'INACTIVE' })
+                    setFormData({
+                      ...formData,
+                      status: value as "ACTIVE" | "INACTIVE",
+                    })
                   }
                 >
                   <SelectTrigger>

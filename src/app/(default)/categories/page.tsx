@@ -77,7 +77,7 @@ export default function CategoriesPage() {
   const [uploadImage, { isLoading: isUploading }] = useUploadSingleImageMutation();
 
   const categories = Array.isArray(data?.data) ? data.data : (data?.data?.result || []);
-  const meta = data?.data?.meta;
+  const meta = data?.meta?.page;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -301,7 +301,7 @@ export default function CategoriesPage() {
                     <TableCell className="max-w-md truncate">
                       {category.description || "—"}
                     </TableCell>
-                    <TableCell>{category.productCount || 0}</TableCell>
+                    <TableCell>{category?._count?.products || 0}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -408,8 +408,9 @@ export default function CategoriesPage() {
               
               {imagePreview && (
                 <div className="relative w-full h-48 mt-2 border rounded-lg overflow-hidden bg-muted">
-                  <img
+                  <Image
                     src={imagePreview}
+                    fill
                     alt="Preview"
                     className="w-full h-full object-contain"
                   />
@@ -456,8 +457,9 @@ export default function CategoriesPage() {
             <div className="space-y-4">
               {viewCategory.image && (
                 <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                  <img
+                  <Image
                     src={viewCategory.image}
+                    fill
                     alt={viewCategory.name}
                     className="w-full h-full object-cover"
                   />
