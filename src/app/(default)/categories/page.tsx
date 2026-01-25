@@ -11,6 +11,7 @@ import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from "@/store/features/categories/categoriesApi";
+import { useUploadSingleImageMutation } from "@/store/features/images/imagesApi";
 import {
   Table,
   TableBody,
@@ -51,6 +52,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Edit, Trash2, FolderOpen, Loader2, Eye, X } from "lucide-react";
 import { toast } from "sonner";
 import { Category, CreateCategoryInput } from "@/types/category";
+import Image from "next/image";
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
@@ -72,8 +74,9 @@ export default function CategoriesPage() {
   const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
   const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
+  const [uploadImage, { isLoading: isUploading }] = useUploadSingleImageMutation();
 
-  const categories = data?.data?.result || [];
+  const categories = Array.isArray(data?.data) ? data.data : (data?.data?.result || []);
   const meta = data?.data?.meta;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,29 +160,44 @@ export default function CategoriesPage() {
     }
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("name", formData.name);
-      if (formData.description) formDataToSend.append("description", formData.description);
+      let imageUrl = formData.image || "";
 
+      // Step 1: Upload image if new file selected
       if (imageFile) {
-        formDataToSend.append("image", imageFile);
-      } else if (formData.image) {
-        formDataToSend.append("imageUrl", formData.image);
+        const imageFormData = new FormData();
+        imageFormData.append("image", imageFile);
+        
+        const uploadResult = await uploadImage(imageFormData).unwrap();
+        imageUrl = uploadResult?.data?.url || "";
+        
+        if (!imageUrl) {
+          toast.error("Failed to upload image");
+          return;
+        }
       }
+
+      // Step 2: Create/Update category with JSON payload
+      const payload: CreateCategoryInput = {
+        name: formData.name,
+        description: formData.description,
+        image: imageUrl,
+      };
 
       if (editingCategory) {
         await updateCategory({
           id: editingCategory.id,
-          formData: formDataToSend,
+          body: payload,
         }).unwrap();
         toast.success("Category updated successfully");
       } else {
-        await createCategory(formDataToSend).unwrap();
+        await createCategory(payload).unwrap();
         toast.success("Category created successfully");
       }
+      
       handleCloseDialog();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Something went wrong");
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      toast.error(err?.data?.message || "Something went wrong");
       console.error(error);
     }
   };
@@ -246,6 +264,7 @@ export default function CategoriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Id</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Products</TableHead>
@@ -253,14 +272,17 @@ export default function CategoriesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((category) => (
+                {categories?.map((category: Category) => (
                   <TableRow key={category.id}>
+                    <TableCell>{category.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded bg-muted flex items-center justify-center overflow-hidden">
                           {category.image ? (
-                            <img
+                            <Image
                               src={category.image}
+                              width={800}
+                              height={800}
                               alt={category.name}
                               className="h-full w-full object-cover"
                             />
@@ -412,11 +434,11 @@ export default function CategoriesPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreating || isUpdating}>
-                {(isCreating || isUpdating) && (
+              <Button type="submit" disabled={isCreating || isUpdating || isUploading}>
+                {(isCreating || isUpdating || isUploading) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {editingCategory ? "Update" : "Create"}
+                {isUploading ? "Uploading..." : editingCategory ? "Update" : "Create"}
               </Button>
             </DialogFooter>
           </form>

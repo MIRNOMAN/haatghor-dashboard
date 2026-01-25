@@ -467,12 +467,14 @@ export function ProductForm({ product, isEdit }: ProductFormProps) {
               )}
 
 {uploadedImages.map((img) => (
-  <div key={img._id} className="relative group aspect-square">
+  <div key={img._id} className="relative group flex aspect-square">
     <Image
-      fill
+  
       src={img.url}
+      width={800}
+      height={800}
       alt="product"
-      className="object-cover rounded"
+      className="object-cover rounded w-full h-full"
     />
     <button
       type="button"

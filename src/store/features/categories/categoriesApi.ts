@@ -1,6 +1,6 @@
 import { baseApi } from "@/store/api";
-import { Category, CreateCategoryInput, UpdateCategoryInput } from "@/types/category";
-import { T_ApiResponse, T_ApiResponseForPagination } from "@/types";
+import { Category, CreateCategoryInput } from "@/types/category";
+import { TApiResponse, T_ApiResponseForPagination } from "@/types";
 
 export const categoriesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -22,33 +22,33 @@ export const categoriesApi = baseApi.injectEndpoints({
     }),
 
     // Get category by ID
-    getCategoryById: builder.query<T_ApiResponse<Category>, string>({
+    getCategoryById: builder.query<TApiResponse<Category>, string>({
       query: (id) => `/categories/${id}`,
       providesTags: ['Categories'],
     }),
 
     // Create category
-    createCategory: builder.mutation<T_ApiResponse<Category>, FormData>({
-      query: (formData) => ({
+    createCategory: builder.mutation<TApiResponse<Category>, CreateCategoryInput>({
+      query: (body) => ({
         url: '/categories',
         method: 'POST',
-        body: formData,
+        body,
       }),
       invalidatesTags: ['Categories'],
     }),
 
     // Update category
-    updateCategory: builder.mutation<T_ApiResponse<Category>, { id: string; formData: FormData }>({
-      query: ({ id, formData }) => ({
+    updateCategory: builder.mutation<TApiResponse<Category>, { id: string; body: Partial<CreateCategoryInput> }>({
+      query: ({ id, body }) => ({
         url: `/categories/${id}`,
         method: 'PUT',
-        body: formData,
+        body,
       }),
       invalidatesTags: ['Categories'],
     }),
 
     // Delete category
-    deleteCategory: builder.mutation<T_ApiResponse<null>, string>({
+    deleteCategory: builder.mutation<TApiResponse<null>, string>({
       query: (id) => ({
         url: `/categories/${id}`,
         method: 'DELETE',
