@@ -29,21 +29,21 @@ export const productsApi = baseApi.injectEndpoints({
     }),
 
     // Create product
-    createProduct: builder.mutation<T_ApiResponse<Product>, CreateProductInput>({
-      query: (data) => ({
+    createProduct: builder.mutation<T_ApiResponse<Product>, FormData>({
+      query: (formData) => ({
         url: '/products',
         method: 'POST',
-        body: data,
+        body: formData,
       }),
       invalidatesTags: ['Products'],
     }),
 
     // Update product
-    updateProduct: builder.mutation<T_ApiResponse<Product>, UpdateProductInput>({
-      query: ({ id, ...data }) => ({
+    updateProduct: builder.mutation<T_ApiResponse<Product>, { id: string; formData: FormData }>({
+      query: ({ id, formData }) => ({
         url: `/products/${id}`,
         method: 'PUT',
-        body: data,
+        body: formData,
       }),
       invalidatesTags: ['Products'],
     }),

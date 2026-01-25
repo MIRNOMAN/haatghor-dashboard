@@ -15,15 +15,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Trash2, Star, MessageSquare } from "lucide-react";
+import { MoreHorizontal, Trash2, Star, MessageSquare, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { Review } from "@/types/review";
 
 export default function ReviewsPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewReview, setViewReview] = useState<Review | null>(null);
 
   const { data, isLoading } = useGetAllReviewsQuery({
     page,
@@ -150,6 +153,10 @@ export default function ReviewsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setViewReview(review)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
                           {review.status !== "APPROVED" && (
                             <DropdownMenuItem onClick={() => handleStatusChange(review.id, "APPROVED")}>
                               Approve
@@ -176,6 +183,86 @@ export default function ReviewsPage() {
           {meta && meta.totalPages > 1 && <Pagination currentPage={page} totalPages={meta.totalPages} onPageChange={setPage} />}
         </>
       )}
+
+      {/* View Review Dialog */}
+      <Dialog open={!!viewReview} onOpenChange={() => setViewReview(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Review Details</DialogTitle>
+            <DialogDescription>Complete information about this review</DialogDescription>
+          </DialogHeader>
+          {viewReview && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Product</label>
+                  <p className="mt-1">{viewReview.product?.name || "N/A"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">User</label>
+                  <p className="mt-1">{viewReview.user?.name || "Anonymous"}</p>
+                  <p className="text-sm text-muted-foreground">{viewReview.user?.email || ""}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Rating</label>
+                  <div className="flex items-center gap-1 mt-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star 
+                        key={i} 
+                        className={`h-4 w-4 ${i < viewReview.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                      />
+                    ))}
+                    <span className="ml-2">{viewReview.rating}/5</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <div className="mt-1">
+                    {getStatusBadge(viewReview.status)}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Verified Purchase</label>
+                <p className="mt-1">{viewReview.isVerifiedPurchase ? "Yes" : "No"}</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Comment</label>
+                <p className="mt-1 text-sm">{viewReview.comment}</p>
+              </div>
+
+              {viewReview.images && viewReview.images.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Review Images</label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    {viewReview.images.map((img, idx) => (
+                      <div key={idx} className="aspect-square border rounded-lg overflow-hidden bg-muted">
+                        <img src={img} alt={`Review ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                <div>
+                  <label className="font-medium">Created At</label>
+                  <p>{new Date(viewReview.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="font-medium">Updated At</label>
+                  <p>{new Date(viewReview.updatedAt).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

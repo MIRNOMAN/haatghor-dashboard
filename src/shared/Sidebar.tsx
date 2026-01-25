@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAppDispatch } from "@/store/hookts";
+import { logout } from "@/store/features/auth/authSlice";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -10,6 +12,7 @@ import {
   Users,
   FolderOpen,
   Image,
+  ImageIcon,
   Settings,
   LogOut,
   HelpCircle,
@@ -56,6 +59,11 @@ const menuItems = [
 
 const contentItems = [
   {
+    title: "Images",
+    href: "/images",
+    icon: ImageIcon,
+  },
+  {
     title: "Reviews",
     href: "/reviews",
     icon: MessageSquare,
@@ -87,6 +95,28 @@ const settingsItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+  const handleLogout = () => {
+    // Clear Redux state
+    dispatch(logout());
+    
+    // Clear cookies
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Clear localStorage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    
+    // Clear sessionStorage
+    sessionStorage.clear();
+    
+    // Redirect to login
+    router.push("/login");
+  };
 
   return (
     <div className="hidden md:flex md:flex-col md:w-64 border rounded-lg bg-card">
@@ -176,6 +206,7 @@ export default function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout

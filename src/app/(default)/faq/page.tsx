@@ -50,7 +50,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Edit, Trash2, HelpCircle, Loader2 } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, HelpCircle, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { FAQ, CreateFAQInput } from "@/types/faq";
 
@@ -58,6 +58,7 @@ export default function FAQPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewFAQ, setViewFAQ] = useState<FAQ | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState<FAQ | null>(null);
   const [formData, setFormData] = useState<Partial<CreateFAQInput>>({
@@ -240,6 +241,10 @@ export default function FAQPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setViewFAQ(faq)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenDialog(faq)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
@@ -366,6 +371,51 @@ export default function FAQPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View FAQ Dialog */}
+      <Dialog open={!!viewFAQ} onOpenChange={() => setViewFAQ(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>FAQ Details</DialogTitle>
+            <DialogDescription>View FAQ information</DialogDescription>
+          </DialogHeader>
+          {viewFAQ && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Question</p>
+                <p className="text-base font-medium">{viewFAQ.question}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Answer</p>
+                <p className="text-base whitespace-pre-wrap">{viewFAQ.answer}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Category</p>
+                  <p className="text-base">{viewFAQ.category || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Display Order</p>
+                  <p className="text-base">{viewFAQ.order}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <Badge variant={viewFAQ.isActive ? "default" : "secondary"}>
+                    {viewFAQ.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Created</p>
+                  <p className="text-base">{new Date(viewFAQ.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setViewFAQ(null)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

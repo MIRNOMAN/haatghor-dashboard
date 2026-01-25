@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/store/hookts";
+import { logout } from "@/store/features/auth/authSlice";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -96,7 +99,29 @@ const menuItems = [
 
 export default function TopBar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    // Clear Redux state
+    dispatch(logout());
+    
+    // Clear cookies
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Clear localStorage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    
+    // Clear sessionStorage
+    sessionStorage.clear();
+    
+    // Redirect to login
+    router.push("/login");
+  };
 
   return (
     <header className="flex items-center justify-between border rounded-lg bg-card p-4">
@@ -143,6 +168,7 @@ export default function TopBar() {
               <Button
                 variant="ghost"
                 className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -237,7 +263,10 @@ export default function TopBar() {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600 focus:text-red-600">
+            <DropdownMenuItem 
+              className="text-red-600 focus:text-red-600 cursor-pointer"
+              onClick={handleLogout}
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </DropdownMenuItem>

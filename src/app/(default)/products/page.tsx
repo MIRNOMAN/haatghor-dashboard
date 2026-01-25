@@ -39,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Edit, Trash2, Package, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function ProductsPage() {
   const { data, isLoading } = useGetAllProductsQuery({ page, limit: 10, search });
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
-  const products = data?.data?.result || [];
+  const products = data?.data || [];
   const meta = data?.data?.meta;
 
   const handleDelete = async () => {
@@ -162,9 +163,11 @@ export default function ProductsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded bg-muted flex items-center justify-center overflow-hidden">
-                          {product.thumbnail ? (
-                            <img
-                              src={product.thumbnail}
+                          {product.images ? (
+                            <Image
+                              src={product.images[0]}
+                              width={40}
+                              height={40}
                               alt={product.name}
                               className="h-full w-full object-cover"
                             />

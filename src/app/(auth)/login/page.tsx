@@ -11,6 +11,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useAppDispatch } from "@/store/hookts";
 import { setUser } from "@/store/features/auth/authSlice";
+import  Cookies  from "js-cookie";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,6 +58,10 @@ export default function LoginPage() {
           user: data.data.user,
         })
       );
+
+     
+      Cookies.set("accessToken", data.data.accessToken);
+ 
 
       toast.success("Login successful!");
       router.push("/");

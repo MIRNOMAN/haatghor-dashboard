@@ -28,21 +28,21 @@ export const bannersApi = baseApi.injectEndpoints({
     }),
 
     // Create banner
-    createBanner: builder.mutation<T_ApiResponse<Banner>, CreateBannerInput>({
-      query: (data) => ({
+    createBanner: builder.mutation<T_ApiResponse<Banner>, FormData>({
+      query: (formData) => ({
         url: '/banners',
         method: 'POST',
-        body: data,
+        body: formData,
       }),
       invalidatesTags: ['Banners'],
     }),
 
     // Update banner
-    updateBanner: builder.mutation<T_ApiResponse<Banner>, UpdateBannerInput>({
-      query: ({ id, ...data }) => ({
+    updateBanner: builder.mutation<T_ApiResponse<Banner>, { id: string; formData: FormData }>({
+      query: ({ id, formData }) => ({
         url: `/banners/${id}`,
         method: 'PUT',
-        body: data,
+        body: formData,
       }),
       invalidatesTags: ['Banners'],
     }),

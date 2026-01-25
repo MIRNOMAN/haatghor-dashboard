@@ -14,6 +14,7 @@ export interface Review {
   };
   rating: number;
   comment: string;
+  images?: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   isVerifiedPurchase: boolean;
   createdAt: string;

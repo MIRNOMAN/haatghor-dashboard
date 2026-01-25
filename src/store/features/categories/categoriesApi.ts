@@ -28,21 +28,21 @@ export const categoriesApi = baseApi.injectEndpoints({
     }),
 
     // Create category
-    createCategory: builder.mutation<T_ApiResponse<Category>, CreateCategoryInput>({
-      query: (data) => ({
+    createCategory: builder.mutation<T_ApiResponse<Category>, FormData>({
+      query: (formData) => ({
         url: '/categories',
         method: 'POST',
-        body: data,
+        body: formData,
       }),
       invalidatesTags: ['Categories'],
     }),
 
     // Update category
-    updateCategory: builder.mutation<T_ApiResponse<Category>, UpdateCategoryInput>({
-      query: ({ id, ...data }) => ({
+    updateCategory: builder.mutation<T_ApiResponse<Category>, { id: string; formData: FormData }>({
+      query: ({ id, formData }) => ({
         url: `/categories/${id}`,
         method: 'PUT',
-        body: data,
+        body: formData,
       }),
       invalidatesTags: ['Categories'],
     }),

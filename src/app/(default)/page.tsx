@@ -52,7 +52,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Revenue"
-          value={`$${stats?.totalRevenue?.toLocaleString() || 0}`}
+          value={`$${stats?.overview?.totalRevenue?.toLocaleString() || 0}`}
           description="Total revenue generated"
           icon={DollarSign}
           iconClassName="text-green-600"
@@ -67,7 +67,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Total Orders"
-          value={stats?.totalOrders?.toLocaleString() || 0}
+          value={stats?.overview?.totalOrders?.toLocaleString() || 0}
           description="Total orders placed"
           icon={ShoppingCart}
           iconClassName="text-blue-600"
@@ -81,15 +81,15 @@ export default function DashboardPage() {
           }
         />
         <StatsCard
-          title="Products"
-          value={stats?.totalProducts?.toLocaleString() || 0}
-          description="Total products in catalog"
+          title="Average Order Value"
+          value={stats?.overview?.averageOrderValue?.toLocaleString() || 0}
+          description="Average order value"
           icon={Package}
           iconClassName="text-purple-600"
         />
         <StatsCard
           title="Customers"
-          value={stats?.totalUsers?.toLocaleString() || 0}
+          value={stats?.overview?.totalUsers?.toLocaleString() || 0}
           description="Total registered users"
           icon={Users}
           iconClassName="text-orange-600"

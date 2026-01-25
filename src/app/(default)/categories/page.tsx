@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Pagination } from "@/components/dashboard/Pagination";
@@ -48,7 +48,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Edit, Trash2, FolderOpen, Loader2 } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, FolderOpen, Loader2, Eye, X } from "lucide-react";
 import { toast } from "sonner";
 import { Category, CreateCategoryInput } from "@/types/category";
 
@@ -57,7 +57,11 @@ export default function CategoriesPage() {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewCategory, setViewCategory] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Partial<CreateCategoryInput>>({
     name: "",
     description: "",
@@ -71,6 +75,36 @@ export default function CategoriesPage() {
 
   const categories = data?.data?.result || [];
   const meta = data?.data?.meta;
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image size should not exceed 10MB');
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -88,6 +122,7 @@ export default function CategoriesPage() {
   const handleOpenDialog = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
+      setImagePreview(category.image || "");
       setFormData({
         name: category.name,
         description: category.description || "",
@@ -95,6 +130,8 @@ export default function CategoriesPage() {
       });
     } else {
       setEditingCategory(null);
+      setImageFile(null);
+      setImagePreview("");
       setFormData({ name: "", description: "", image: "" });
     }
     setIsDialogOpen(true);
@@ -103,6 +140,11 @@ export default function CategoriesPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingCategory(null);
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setFormData({ name: "", description: "", image: "" });
   };
 
@@ -115,14 +157,24 @@ export default function CategoriesPage() {
     }
 
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      if (formData.description) formDataToSend.append("description", formData.description);
+
+      if (imageFile) {
+        formDataToSend.append("image", imageFile);
+      } else if (formData.image) {
+        formDataToSend.append("imageUrl", formData.image);
+      }
+
       if (editingCategory) {
         await updateCategory({
           id: editingCategory.id,
-          ...formData,
-        } as any).unwrap();
+          formData: formDataToSend,
+        }).unwrap();
         toast.success("Category updated successfully");
       } else {
-        await createCategory(formData as CreateCategoryInput).unwrap();
+        await createCategory(formDataToSend).unwrap();
         toast.success("Category created successfully");
       }
       handleCloseDialog();
@@ -237,6 +289,12 @@ export default function CategoriesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
+                            onClick={() => setViewCategory(category)}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => handleOpenDialog(category)}
                           >
                             <Edit className="mr-2 h-4 w-4" />
@@ -311,15 +369,39 @@ export default function CategoriesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image">Image URL</Label>
-              <Input
-                id="image"
-                value={formData.image || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
-                }
-                placeholder="https://example.com/image.jpg"
-              />
+              <Label htmlFor="image">Category Image</Label>
+              <div className="space-y-2">
+                <Input
+                  ref={fileInputRef}
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Supported: JPG, PNG, GIF, WebP (Max 10MB)
+                </p>
+              </div>
+              
+              {imagePreview && (
+                <div className="relative w-full h-48 mt-2 border rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <DialogFooter>
@@ -338,6 +420,54 @@ export default function CategoriesPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Category Dialog */}
+      <Dialog open={!!viewCategory} onOpenChange={() => setViewCategory(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Category Details</DialogTitle>
+            <DialogDescription>View category information</DialogDescription>
+          </DialogHeader>
+          {viewCategory && (
+            <div className="space-y-4">
+              {viewCategory.image && (
+                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                  <img
+                    src={viewCategory.image}
+                    alt={viewCategory.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="text-base font-medium">{viewCategory.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Slug</p>
+                  <p className="text-base">{viewCategory.slug}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Description</p>
+                  <p className="text-base">{viewCategory.description || "No description"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Products</p>
+                  <p className="text-base">{viewCategory.productCount || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Created</p>
+                  <p className="text-base">{new Date(viewCategory.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setViewCategory(null)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

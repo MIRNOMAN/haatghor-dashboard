@@ -1,6 +1,6 @@
 import { baseApi } from "@/store/api";
 import { FAQ, CreateFAQInput, UpdateFAQInput } from "@/types/faq";
-import { T_ApiResponse, T_ApiResponseForPagination } from "@/types";
+import {  T_ApiResponseForPagination } from "@/types";
 
 export const faqApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({

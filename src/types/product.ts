@@ -32,7 +32,7 @@ export interface CreateProductInput {
   images: string[];
   thumbnail?: string;
   tags?: string[];
-  status?: 'ACTIVE' | 'INACTIVE';
+  status?: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Pagination } from "@/components/dashboard/Pagination";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -55,7 +55,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Edit, Trash2, Image as ImageIcon, Loader2 } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Banner, CreateBannerInput } from "@/types/banner";
 
@@ -64,6 +64,9 @@ export default function BannersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Partial<CreateBannerInput>>({
     title: "",
     description: "",
@@ -95,9 +98,42 @@ export default function BannersPage() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image size should not exceed 10MB');
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleOpenDialog = (banner?: Banner) => {
     if (banner) {
       setEditingBanner(banner);
+      setImagePreview(banner.image);
       setFormData({
         title: banner.title,
         description: banner.description || "",
@@ -109,6 +145,8 @@ export default function BannersPage() {
       });
     } else {
       setEditingBanner(null);
+      setImageFile(null);
+      setImagePreview("");
       setFormData({
         title: "",
         description: "",
@@ -125,6 +163,11 @@ export default function BannersPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingBanner(null);
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setFormData({
       title: "",
       description: "",
@@ -139,20 +182,39 @@ export default function BannersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.image) {
-      toast.error("Title and image are required");
+    if (!formData.title) {
+      toast.error("Title is required");
+      return;
+    }
+
+    if (!imageFile && !formData.image) {
+      toast.error("Image is required");
       return;
     }
 
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("title", formData.title);
+      if (formData.description) formDataToSend.append("description", formData.description);
+      if (formData.link) formDataToSend.append("link", formData.link);
+      formDataToSend.append("position", formData.position || "TOP");
+      formDataToSend.append("status", formData.status || "ACTIVE");
+      formDataToSend.append("order", formData.order?.toString() || "0");
+
+      if (imageFile) {
+        formDataToSend.append("image", imageFile);
+      } else if (formData.image) {
+        formDataToSend.append("imageUrl", formData.image);
+      }
+
       if (editingBanner) {
         await updateBanner({
           id: editingBanner.id,
-          ...formData,
+          formData: formDataToSend,
         }).unwrap();
         toast.success("Banner updated successfully");
       } else {
-        await createBanner(formData as CreateBannerInput).unwrap();
+        await createBanner(formDataToSend).unwrap();
         toast.success("Banner created successfully");
       }
       handleCloseDialog();
@@ -378,17 +440,40 @@ export default function BannersPage() {
 
             <div className="space-y-2">
               <Label htmlFor="image">
-                Image URL <span className="text-red-500">*</span>
+                Banner Image <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="image"
-                value={formData.image}
-                onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
-                }
-                placeholder="https://example.com/banner.jpg"
-                required
-              />
+              <div className="space-y-2">
+                <Input
+                  ref={fileInputRef}
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="cursor-pointer"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Supported: JPG, PNG, GIF, WebP (Max 10MB)
+                </p>
+              </div>
+              
+              {imagePreview && (
+                <div className="relative w-full h-48 mt-2 border rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemoveImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">

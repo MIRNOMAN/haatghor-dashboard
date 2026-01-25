@@ -118,3 +118,31 @@ export interface IErrorResponse {
   };
   status: number;
 }
+
+/* ---------- Module Exports ---------- */
+export * from "./auth";
+export * from "./product";
+export * from "./category";
+export * from "./banner";
+export * from "./order";
+export * from "./dashboard";
+export * from "./review";
+export * from "./faq";
+export * from "./contact";
+export * from "./policy";
+export * from "./image";
+
+/* ---------- Pagination Type ---------- */
+export type T_ApiResponseForPagination<T> = {
+  success: boolean;
+  message: string;
+  data: {
+    result: T;
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+};

@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Trash2, Mail, Reply, Loader2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Mail, Reply, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { ContactMessage } from "@/types/contact";
 
@@ -23,6 +23,7 @@ export default function ContactPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewMessage, setViewMessage] = useState<ContactMessage | null>(null);
   const [replyingTo, setReplyingTo] = useState<ContactMessage | null>(null);
   const [reply, setReply] = useState("");
 
@@ -156,6 +157,10 @@ export default function ContactPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setViewMessage(message)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setReplyingTo(message)}>
                             <Reply className="mr-2 h-4 w-4" />
                             Reply
@@ -208,6 +213,84 @@ export default function ContactPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Message Dialog */}
+      <Dialog open={!!viewMessage} onOpenChange={() => setViewMessage(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Contact Message Details</DialogTitle>
+            <DialogDescription>
+              Received on {viewMessage && new Date(viewMessage.createdAt).toLocaleString()}
+            </DialogDescription>
+          </DialogHeader>
+          {viewMessage && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name</p>
+                  <p className="text-base">{viewMessage.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="text-base">{viewMessage.email}</p>
+                </div>
+                {viewMessage.phone && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                    <p className="text-base">{viewMessage.phone}</p>
+                  </div>
+                )}
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                  <p className="text-base font-medium">{viewMessage.subject}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Message</p>
+                  <p className="text-base whitespace-pre-wrap">{viewMessage.message}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  {getStatusBadge(viewMessage.status)}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Created</p>
+                  <p className="text-base">{new Date(viewMessage.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              {viewMessage.response && (
+                <div className="border-t pt-4">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Response</p>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-base whitespace-pre-wrap">{viewMessage.response}</p>
+                    {viewMessage.respondedBy && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Responded by {viewMessage.respondedBy} on{" "}
+                        {viewMessage.respondedAt && new Date(viewMessage.respondedAt).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewMessage(null)}>
+              Close
+            </Button>
+            {viewMessage && !viewMessage.response && (
+              <Button
+                onClick={() => {
+                  setReplyingTo(viewMessage);
+                  setViewMessage(null);
+                }}
+              >
+                <Reply className="mr-2 h-4 w-4" />
+                Reply
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
