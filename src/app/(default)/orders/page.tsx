@@ -61,7 +61,7 @@ export default function OrdersPage() {
   });
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
 
-  const orders = data?.data?.result || [];
+  const orders = data?.data || [];
   const meta = data?.data?.meta;
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
@@ -183,6 +183,7 @@ export default function OrdersPage() {
                   <TableHead>Order #</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
+                      <TableHead>Final Amount</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
@@ -200,15 +201,18 @@ export default function OrdersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        {order.user?.name || "N/A"}
+                        {order.user?.firstName || "N/A"} {order.user?.lastName || ""}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {order.user?.email || ""}
                       </div>
                     </TableCell>
                     <TableCell>{formatDate(order.createdAt)}</TableCell>
+                     <TableCell className="font-medium">
+                      ${order.finalAmount}
+                    </TableCell>
                     <TableCell className="font-medium">
-                      ${order.total.toFixed(2)}
+                      ${order.totalAmount}
                     </TableCell>
                     <TableCell>{getStatusBadge(order.status)}</TableCell>
                     <TableCell>{getPaymentStatusBadge(order.paymentStatus)}</TableCell>

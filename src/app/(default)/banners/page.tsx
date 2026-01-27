@@ -352,7 +352,7 @@ export default function BannersPage() {
                         <div>
                           <div className="font-medium">{banner.title}</div>
                           <div className="text-sm text-muted-foreground truncate max-w-xs">
-                            {banner.description || "No description"}
+                            {banner.subtitle || "No description"}
                           </div>
                         </div>
                       </div>
@@ -476,10 +476,12 @@ export default function BannersPage() {
 
               {imagePreview && (
                 <div className="relative w-full h-48 mt-2 border rounded-lg overflow-hidden bg-muted">
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Preview"
                     className="w-full h-full object-contain"
+                    width={160}
+                    height={100}
                   />
                   <Button
                     type="button"

@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Mail,
   FileText,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -49,6 +50,11 @@ const menuItems = [
     title: "Users",
     href: "/users",
     icon: Users,
+  },
+  {
+    title: "Chats",
+    href: "/chats",
+    icon: MessageCircle,
   },
   {
     title: "Banners",

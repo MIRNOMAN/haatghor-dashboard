@@ -57,6 +57,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Image as ImageType } from "@/types/image";
+import Image from "next/image";
 
 export default function ImagesPage() {
   const [page, setPage] = useState(1);
@@ -92,7 +93,8 @@ export default function ImagesPage() {
   const [updateImage, { isLoading: isUpdating }] = useUpdateImageMutation();
   const [deleteImage, { isLoading: isDeleting }] = useDeleteImageMutation();
 
-  const images = data?.data?.result || [];
+  const images = data?.data
+ || [];
   const meta = data?.data?.meta;
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -262,7 +264,9 @@ export default function ImagesPage() {
                 className="group relative border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="aspect-square bg-muted relative">
-                  <img
+                  <Image
+                    width={100}
+                    height={100}
                     src={image.url}
                     alt={image.alt || image.originalName}
                     className="w-full h-full object-cover"
