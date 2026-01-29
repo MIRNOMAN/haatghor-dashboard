@@ -94,6 +94,8 @@ export const baseApi = createApi({
     "Images",
     "ChatRooms",
     "Messages",
+    "FlashSales",
+    "Subscriptions",
   ],
   endpoints: () => ({}),
 });

@@ -20,6 +20,10 @@ import {
   Mail,
   FileText,
   MessageCircle,
+  Zap,
+  Bell,
+  CreditCard,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -61,6 +65,16 @@ const menuItems = [
     href: "/banners",
     icon: Image,
   },
+  {
+    title: "Flash Sales",
+    href: "/flash-sales",
+    icon: Zap,
+  },
+  {
+    title: "Notifications",
+    href: "/notifications",
+    icon: Bell,
+  },
 ];
 
 const contentItems = [
@@ -88,6 +102,19 @@ const contentItems = [
     title: "Privacy Policy",
     href: "/privacy-policy",
     icon: FileText,
+  },
+];
+
+const financeItems = [
+  {
+    title: "Payments",
+    href: "/payments",
+    icon: DollarSign,
+  },
+  {
+    title: "Subscriptions",
+    href: "/subscriptions",
+    icon: CreditCard,
   },
 ];
 
@@ -161,6 +188,33 @@ export default function Sidebar() {
           </div>
 
           {contentItems.map((item) => {
+            const isActive = pathname === item.href || 
+                           (item.href !== "/" && pathname.startsWith(item.href));
+            const Icon = item.icon;
+
+            return (
+              <Link key={item.href} href={item.href}>
+                <div
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.title}</span>
+                </div>
+              </Link>
+            );
+          })}
+
+          <Separator className="my-2" />
+          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">
+            FINANCE
+          </div>
+
+          {financeItems.map((item) => {
             const isActive = pathname === item.href || 
                            (item.href !== "/" && pathname.startsWith(item.href));
             const Icon = item.icon;

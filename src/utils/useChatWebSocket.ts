@@ -11,6 +11,12 @@ interface Message {
   roomId: string;
   createdAt: string;
   fileUrl?: string[];
+  sender?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    profilePhoto: string | null;
+  };
 }
 
 interface Conversation {
@@ -32,10 +38,11 @@ export function useChatWebSocket() {
   const [error, setError] = useState<string | null>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
-  const token = useAppSelector((state) => state.auth.accessToken); // Fixed: Use accessToken
+  const token = useAppSelector((state) => state.auth.accessToken);
   const user = useAppSelector((state) => state.auth.user);
-  const messageHandlerRef = useRef<((messages: Message[]) => void) | null>(null);
+  const messageCallbackRef = useRef<((messages: Message[]) => void) | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
 
   const connect = useCallback(() => {
@@ -69,7 +76,6 @@ export function useChatWebSocket() {
         setError(null);
         
         // Backend automatically sends conversation list on connect
-        // But we can request it again to be sure
         console.log('📋 Waiting for conversation list from server...');
       };
 
@@ -88,18 +94,26 @@ export function useChatWebSocket() {
 
             case 'past-messages':
               console.log('📜 Received past messages:', data.messages?.length || 0, 'messages');
-              if (messageHandlerRef.current) {
-                messageHandlerRef.current(data.messages || []);
+              if (data.messages) {
+                // Reverse to show oldest first
+                const sortedMessages = [...data.messages].reverse();
+                setMessages(sortedMessages);
+                if (messageCallbackRef.current) {
+                  messageCallbackRef.current(sortedMessages);
+                }
               }
               setCurrentRoomId(data.roomId);
               break;
               
             case 'new-message':
               console.log('💬 Received new message:', data.message);
-              if (messageHandlerRef.current && data.message) {
-                messageHandlerRef.current((prev: Message[]) => {
-                  console.log('Adding message to list. Previous count:', prev.length);
-                  return [...prev, data.message];
+              if (data.message) {
+                setMessages((prev) => {
+                  const newMessages = [...prev, data.message];
+                  if (messageCallbackRef.current) {
+                    messageCallbackRef.current(newMessages);
+                  }
+                  return newMessages;
                 });
               }
               break;
@@ -167,7 +181,7 @@ export function useChatWebSocket() {
       console.error('Error creating WebSocket connection:', err);
       setError('Failed to connect');
     }
-  }, [token]);
+  }, [token, user]);
 
   useEffect(() => {
     console.log('🎬 Dashboard WebSocket hook initialized');
@@ -194,7 +208,8 @@ export function useChatWebSocket() {
 
   const subscribe = useCallback((roomId: string, onMessage: (messages: Message[]) => void) => {
     console.log('📌 Dashboard subscribing to room:', roomId);
-    messageHandlerRef.current = onMessage;
+    messageCallbackRef.current = onMessage;
+    setMessages([]); // Clear previous messages
     
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       console.log('📤 Sending subscribe request to room:', roomId);
@@ -256,6 +271,7 @@ export function useChatWebSocket() {
     isConnected,
     error,
     conversations,
+    messages,
     subscribe,
     sendMessage,
     readMessages,

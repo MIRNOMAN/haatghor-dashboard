@@ -10,7 +10,6 @@ import type { ChatRoom, Message } from '@/store/features/chat/chatSlice';
 
 export default function ChatsPage() {
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
 
   const { data: roomsData, isLoading: isLoadingRooms, refetch: refetchRooms } = useGetChatRoomsQuery();
@@ -18,6 +17,7 @@ export default function ChatsPage() {
   const {
     isConnected,
     conversations: wsConversations,
+    messages,
     sendMessage: sendWSMessage,
     subscribe,
     error,
@@ -42,13 +42,11 @@ export default function ChatsPage() {
 
   const handleRoomSelect = (room: ChatRoom) => {
     setSelectedRoom(room);
-    setMessages([]); // Clear previous messages
     
     if (room.id) {
       console.log('📡 Subscribing to room:', room.id);
       subscribe(room.id, (newMessages) => {
         console.log('📨 Messages updated:', newMessages.length);
-        setMessages(newMessages);
       });
     }
   };
