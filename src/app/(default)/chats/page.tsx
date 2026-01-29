@@ -66,15 +66,21 @@ export default function ChatsPage() {
   }, [isConnected, refetchRooms]);
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Messages</h1>
-        <p className="text-muted-foreground mt-2">
-          Chat with users in real-time
-        </p>
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
+      {/* Page Header - Minimal */}
+      <div className="px-6 py-4 bg-white dark:bg-gray-900 border-b">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Messages</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Chat with users in real-time • {isConnected ? '🟢 Connected' : '🔴 Connecting...'}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Card className="h-[calc(100vh-200px)] flex overflow-hidden">
+      {/* Chat Interface */}
+      <div className="flex-1 flex overflow-hidden">
         <ChatSidebar
           rooms={rooms}
           selectedRoomId={selectedRoom?.id || null}
@@ -90,11 +96,13 @@ export default function ChatsPage() {
           isConnected={isConnected}
           onlineUserIds={onlineUserIds}
         />
-      </Card>
+      </div>
 
+      {/* Error Toast */}
       {error && (
-        <div className="fixed bottom-4 right-4 bg-destructive text-destructive-foreground px-4 py-2 rounded-md shadow-lg">
-          {error}
+        <div className="fixed bottom-6 right-6 bg-red-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
     </div>

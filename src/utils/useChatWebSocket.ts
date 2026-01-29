@@ -39,242 +39,154 @@ export function useChatWebSocket() {
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  
   const wsRef = useRef<WebSocket | null>(null);
   const token = useAppSelector((state) => state.auth.accessToken);
   const user = useAppSelector((state) => state.auth.user);
+  
   const messageCallbackRef = useRef<((messages: Message[]) => void) | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
 
   const connect = useCallback(() => {
-    console.log('🔌 Dashboard WebSocket - Attempting connection...');
-    console.log('🔑 Dashboard - Token:', token ? `${token.substring(0, 20)}...` : 'MISSING');
-    console.log('👤 Dashboard - User:', user ? `${user.firstName} (${user.role})` : 'MISSING');
-    
-    if (!token) {
-      console.log('❌ Dashboard WebSocket: No token available - cannot connect');
-      setError('Please log in to use chat');
-      setIsConnected(false);
+    // আগের কানেকশন থাকলে বন্ধ করে দাও
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        return;
+    }
+
+    if (!token || !user) {
+      setError('Waiting for authentication...');
       return;
     }
 
     try {
-      // Get the base URL using the same function as API calls
       const serverUrl = BASEAPI();
-      console.log('📡 Dashboard - Base API URL:', serverUrl);
       
-      // Convert HTTP to WebSocket URL
-      const wsUrl = serverUrl.replace(/^http/, 'ws').replace(/\/api\/v1$/, '');
-      console.log('📡 Dashboard - WebSocket URL:', wsUrl);
-      console.log('🔌 Dashboard - Creating WebSocket connection...');
+      // লোকালহোস্ট এবং প্রোডাকশন দুইটার জন্যই ইউআরএল ফরম্যাট করা
+      // http://localhost:5000/api/v1 -> ws://localhost:5000/ws
+      const wsUrl = serverUrl.replace(/^http/, 'ws').replace(/\/api\/v1$/, '/ws');
       
-      // Create WebSocket connection with token in URL as query parameter
+      console.log('🔌 Connecting to WebSocket:', wsUrl);
+      
       const ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
 
       ws.onopen = () => {
-        console.log('✅ Dashboard WebSocket connected successfully!');
+        console.log('✅ WebSocket Connected');
         setIsConnected(true);
         setError(null);
-        
-        // Backend automatically sends conversation list on connect
-        console.log('📋 Waiting for conversation list from server...');
+        reconnectAttemptsRef.current = 0;
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📥 Dashboard received WebSocket message:', data.type, data);
-          
           switch (data.type) {
             case 'conversation-list':
-              console.log('📋 Received conversation list:', data.conversations?.length || 0, 'conversations');
-              if (data.conversations) {
-                setConversations(data.conversations);
-              }
+              if (data.conversations) setConversations(data.conversations);
               break;
 
             case 'past-messages':
-              console.log('📜 Received past messages:', data.messages?.length || 0, 'messages');
               if (data.messages) {
-                // Reverse to show oldest first
                 const sortedMessages = [...data.messages].reverse();
                 setMessages(sortedMessages);
-                if (messageCallbackRef.current) {
-                  messageCallbackRef.current(sortedMessages);
-                }
+                if (messageCallbackRef.current) messageCallbackRef.current(sortedMessages);
               }
               setCurrentRoomId(data.roomId);
               break;
               
             case 'new-message':
-              console.log('💬 Received new message:', data.message);
               if (data.message) {
                 setMessages((prev) => {
-                  const newMessages = [...prev, data.message];
-                  if (messageCallbackRef.current) {
-                    messageCallbackRef.current(newMessages);
-                  }
-                  return newMessages;
+                  const updated = [...prev, data.message];
+                  if (messageCallbackRef.current) messageCallbackRef.current(updated);
+                  return updated;
                 });
               }
               break;
 
             case 'new-conversation':
-              console.log('🆕 Received new/updated conversation:', data.conversations);
               if (data.conversations) {
                 setConversations((prev) => {
                   const existingIndex = prev.findIndex(c => c.id === data.conversations.id);
                   if (existingIndex >= 0) {
-                    // Update existing conversation
-                    console.log('Updating existing conversation at index:', existingIndex);
                     const updated = [...prev];
-                    const existing = updated[existingIndex];
-                    updated[existingIndex] = {
-                      ...existing,
-                      ...data.conversations,
-                      unreadCount: existing.unreadCount + (data.conversations.countIncreaseBy || 0),
-                    };
-                    // Move to top
-                    return [updated[existingIndex], ...updated.slice(0, existingIndex), ...updated.slice(existingIndex + 1)];
-                  } else {
-                    // Add new conversation
-                    console.log('Adding new conversation');
-                    return [data.conversations, ...prev];
+                    updated[existingIndex] = { ...updated[existingIndex], ...data.conversations };
+                    return [updated[existingIndex], ...updated.filter((_, i) => i !== existingIndex)];
                   }
+                  return [data.conversations, ...prev];
                 });
               }
               break;
               
             case 'error':
-              console.error('❌ WebSocket error from server:', data.message);
               setError(data.message);
               break;
-              
-            default:
-              console.log('❓ Unknown message type:', data.type, data);
           }
         } catch (err) {
-          console.error('❌ Error parsing WebSocket message:', err);
+          console.error('❌ Parsing Error:', err);
         }
       };
 
-      ws.onerror = (event) => {
-        console.error('❌ Dashboard WebSocket error:', event);
-        setError('Failed to connect to chat server');
-        setIsConnected(false);
+      ws.onerror = (err) => {
+        console.error('❌ WS Error:', err);
+        setError('Connection Error');
       };
 
       ws.onclose = (event) => {
-        console.log('🔴 Dashboard WebSocket disconnected. Code:', event.code, 'Reason:', event.reason);
         setIsConnected(false);
+        console.log(`🔴 Disconnected (Code: ${event.code})`);
         
-        // Only reconnect if we have a token and it wasn't a clean close
-        if (token && event.code !== 1000) {
+        // অটো-রিকানেক্ট লজিক (যদি ম্যানুয়ালি ক্লোজ না করা হয়)
+        if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
+          const delay = Math.min(3000 * (reconnectAttemptsRef.current + 1), 10000);
           reconnectTimeoutRef.current = setTimeout(() => {
-            console.log('🔄 Dashboard attempting to reconnect...');
+            reconnectAttemptsRef.current++;
             connect();
-          }, 3000);
+          }, delay);
         }
       };
 
       wsRef.current = ws;
     } catch (err) {
-      console.error('Error creating WebSocket connection:', err);
-      setError('Failed to connect');
+      setError('Failed to create connection');
     }
   }, [token, user]);
 
   useEffect(() => {
-    console.log('🎬 Dashboard WebSocket hook initialized');
-    console.log('🔑 Has token:', !!token);
-    console.log('👤 Has user:', !!user);
-    
-    if (token && user) {
-      console.log('✅ Dashboard has auth, connecting...');
-      connect();
-    } else {
-      console.log('⏳ Dashboard waiting for authentication...');
-    }
+    // Redux Persist থেকে ডাটা লোড হতে সময় দিতে ছোট একটি ডিলে
+    const timer = setTimeout(() => {
+      if (token && user) {
+        connect();
+      }
+    }, 1000);
 
     return () => {
-      console.log('🧹 Dashboard WebSocket cleanup');
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      clearTimeout(timer);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) wsRef.current.close(1000);
     };
   }, [connect, token, user]);
 
   const subscribe = useCallback((roomId: string, onMessage: (messages: Message[]) => void) => {
-    console.log('📌 Dashboard subscribing to room:', roomId);
     messageCallbackRef.current = onMessage;
-    setMessages([]); // Clear previous messages
-    
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log('📤 Sending subscribe request to room:', roomId);
-      wsRef.current.send(JSON.stringify({
-        type: 'subscribe',
-        roomId,
-      }));
-    } else {
-      console.warn('⚠️ Cannot subscribe - WebSocket not ready. State:', wsRef.current?.readyState);
-      
-      // Retry after a short delay
-      setTimeout(() => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          console.log('🔄 Retrying subscribe to room:', roomId);
-          wsRef.current.send(JSON.stringify({
-            type: 'subscribe',
-            roomId,
-          }));
-        }
-      }, 1000);
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'subscribe', roomId }));
     }
   }, []);
 
   const sendMessage = useCallback((content: string, fileUrl: string[] = []) => {
-    console.log('📨 Dashboard attempting to send message:', {content, roomId: currentRoomId});
-    
-    if (!currentRoomId) {
-      const errorMsg = 'No chat room selected';
-      console.error('❌', errorMsg);
-      setError(errorMsg);
-      return;
-    }
-    
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log('📤 Sending message via WebSocket');
+    if (wsRef.current?.readyState === WebSocket.OPEN && currentRoomId) {
       wsRef.current.send(JSON.stringify({
         type: 'send-message',
         content,
         fileUrl,
         roomId: currentRoomId,
       }));
-      setError(null);
     } else {
-      const errorMsg = 'WebSocket not connected';
-      console.error('❌', errorMsg, 'ReadyState:', wsRef.current?.readyState);
-      setError(errorMsg);
+        setError("Can't send message: Not connected");
     }
   }, [currentRoomId]);
 
-  const readMessages = useCallback(() => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'read-message',
-      }));
-    }
-  }, []);
-
-  return {
-    isConnected,
-    error,
-    conversations,
-    messages,
-    subscribe,
-    sendMessage,
-    readMessages,
-    currentRoomId,
-  };
+  return { isConnected, error, conversations, messages, subscribe, sendMessage, currentRoomId };
 }

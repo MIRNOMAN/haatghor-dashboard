@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { ReactNode } from "react";
 
 interface PageHeaderProps {
   title: string;
@@ -7,7 +8,7 @@ interface PageHeaderProps {
   action?: {
     label: string;
     onClick: () => void;
-  };
+  } | ReactNode;
 }
 
 export function PageHeader({ title, description, action }: PageHeaderProps) {
@@ -20,10 +21,12 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
         )}
       </div>
       {action && (
-        <Button onClick={action.onClick}>
-          <Plus className="mr-2 h-4 w-4" />
-          {action.label}
-        </Button>
+        typeof action === 'object' && 'label' in action ? (
+          <Button onClick={action.onClick}>
+            <Plus className="mr-2 h-4 w-4" />
+            {action.label}
+          </Button>
+        ) : action
       )}
     </div>
   );

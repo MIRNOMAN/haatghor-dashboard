@@ -2,26 +2,55 @@ import { baseApi } from '@/store/api';
 
 export interface FlashSale {
   id: string;
-  name: string;
+  title: string;
+  description?: string;
+  productId: string;
+  originalPrice: number;
+  flashPrice: number;
+  discount: number;
+  totalStock: number;
+  soldCount: number;
+  remainingStock: number;
   startTime: string;
   endTime: string;
-  discount: number;
-  products: string[];
   isActive: boolean;
+  isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
+  product?: {
+    id: string;
+    name: string;
+    slug: string;
+    images: string[];
+    price: number;
+    stock: number;
+    category: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export interface CreateFlashSaleInput {
-  name: string;
+  title: string;
+  description?: string;
+  productId: string;
+  flashPrice: number;
+  totalStock: number;
   startTime: string;
   endTime: string;
-  discount: number;
-  products: string[];
+  isFeatured?: boolean;
 }
 
-export interface UpdateFlashSaleInput extends Partial<CreateFlashSaleInput> {
+export interface UpdateFlashSaleInput {
+  title?: string;
+  description?: string;
+  flashPrice?: number;
+  totalStock?: number;
+  startTime?: string;
+  endTime?: string;
   isActive?: boolean;
+  isFeatured?: boolean;
 }
 
 export const flashSalesApi = baseApi.injectEndpoints({
@@ -29,13 +58,16 @@ export const flashSalesApi = baseApi.injectEndpoints({
     // Get all flash sales with pagination and search
     getFlashSales: builder.query<
       { data: FlashSale[]; meta: { total: number; page: number; limit: number } },
-      { page?: number; limit?: number; searchTerm?: string }
+      { page?: number; limit?: number; searchTerm?: string; status?: 'UPCOMING' | 'LIVE' | 'ENDED'; isActive?: boolean }
     >({
-      query: ({ page = 1, limit = 10, searchTerm }) => ({
+      query: ({ page = 1, limit = 10, searchTerm, status, isActive }) => ({
         url: '/flash-sales',
-        params: { page, limit, searchTerm },
+        params: { page, limit, searchTerm, status, isActive },
       }),
-      transformResponse: (response: { data: { data: FlashSale[]; meta: any } }) => response.data,
+      transformResponse: (response: { data: FlashSale[]; meta: any }) => ({
+        data: response.data,
+        meta: response.meta,
+      }),
       providesTags: (result) =>
         result
           ? [
@@ -52,11 +84,11 @@ export const flashSalesApi = baseApi.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'FlashSales', id }],
     }),
 
-    // Get active flash sales
-    getActiveFlashSales: builder.query<FlashSale[], void>({
-      query: () => '/flash-sales/active',
+    // Get live flash sales (public endpoint)
+    getLiveFlashSales: builder.query<FlashSale[], void>({
+      query: () => '/flash-sales/live',
       transformResponse: (response: { data: FlashSale[] }) => response.data,
-      providesTags: [{ type: 'FlashSales', id: 'ACTIVE' }],
+      providesTags: [{ type: 'FlashSales', id: 'LIVE' }],
     }),
 
     // Create flash sale
@@ -67,7 +99,7 @@ export const flashSalesApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (response: { data: FlashSale }) => response.data,
-      invalidatesTags: [{ type: 'FlashSales', id: 'LIST' }],
+      invalidatesTags: [{ type: 'FlashSales', id: 'LIST' }, { type: 'FlashSales', id: 'LIVE' }],
     }),
 
     // Update flash sale
@@ -81,7 +113,7 @@ export const flashSalesApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [
         { type: 'FlashSales', id },
         { type: 'FlashSales', id: 'LIST' },
-        { type: 'FlashSales', id: 'ACTIVE' },
+        { type: 'FlashSales', id: 'LIVE' },
       ],
     }),
 
@@ -94,20 +126,7 @@ export const flashSalesApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, id) => [
         { type: 'FlashSales', id },
         { type: 'FlashSales', id: 'LIST' },
-      ],
-    }),
-
-    // Toggle flash sale status
-    toggleFlashSaleStatus: builder.mutation<FlashSale, string>({
-      query: (id) => ({
-        url: `/flash-sales/${id}/toggle`,
-        method: 'PATCH',
-      }),
-      transformResponse: (response: { data: FlashSale }) => response.data,
-      invalidatesTags: (result, error, id) => [
-        { type: 'FlashSales', id },
-        { type: 'FlashSales', id: 'LIST' },
-        { type: 'FlashSales', id: 'ACTIVE' },
+        { type: 'FlashSales', id: 'LIVE' },
       ],
     }),
   }),
@@ -116,9 +135,8 @@ export const flashSalesApi = baseApi.injectEndpoints({
 export const {
   useGetFlashSalesQuery,
   useGetFlashSaleQuery,
-  useGetActiveFlashSalesQuery,
+  useGetLiveFlashSalesQuery,
   useCreateFlashSaleMutation,
   useUpdateFlashSaleMutation,
   useDeleteFlashSaleMutation,
-  useToggleFlashSaleStatusMutation,
 } = flashSalesApi;

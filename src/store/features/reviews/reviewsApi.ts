@@ -28,20 +28,20 @@ export const reviewsApi = baseApi.injectEndpoints({
       providesTags: ['Reviews'],
     }),
 
-    // Update review status
+    // Update review status (admin)
     updateReviewStatus: builder.mutation<T_ApiResponse<Review>, UpdateReviewStatusInput>({
       query: ({ id, status }) => ({
         url: `/reviews/${id}/status`,
-        method: 'PUT',
+        method: 'PATCH',
         body: { status },
       }),
       invalidatesTags: ['Reviews'],
     }),
 
-    // Delete review
+    // Delete review (admin)
     deleteReview: builder.mutation<T_ApiResponse<null>, string>({
       query: (id) => ({
-        url: `/reviews/${id}`,
+        url: `/reviews/${id}/admin`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Reviews'],

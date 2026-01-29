@@ -36,7 +36,7 @@ export default function ReviewsPage() {
   const [updateReviewStatus] = useUpdateReviewStatusMutation();
   const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
 
-  const reviews = data?.data?.result || [];
+  const reviews = data?.data || [];
   const meta = data?.data?.meta;
 
   const handleStatusChange = async (id: string, status: "APPROVED" | "REJECTED") => {
