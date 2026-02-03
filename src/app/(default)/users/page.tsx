@@ -200,7 +200,7 @@ export default function UsersPage() {
                     <TableCell>
                       <div className="font-medium">{user.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        ID: {user.id.slice(0, 8)}...
+                        ID: {user.id}...
                       </div>
                     </TableCell>
                     <TableCell>{user.firstName} {user.lastName}</TableCell>

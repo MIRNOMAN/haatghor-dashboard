@@ -13,6 +13,22 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  BarChart,
+  Bar,
+} from "recharts";
+
 export default function DashboardPage() {
   const { data, isLoading } = useGetDashboardStatsQuery();
   const stats = data?.data;
@@ -38,6 +54,24 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  // Prepare Recharts data
+  const monthlyData =
+    stats?.monthlySales?.map((m) => {
+      const date = new Date(`${m.month}-01`);
+      const label = date.toLocaleString(undefined, { month: "short", year: "numeric" });
+      return { month: label, revenue: m.revenue, orders: m.orders };
+    }) || [];
+
+  const statusData =
+    stats?.ordersByStatus
+      ? Object.entries(stats.ordersByStatus).map(([name, value]) => ({ name, value }))
+      : [];
+
+  const statusColors = ["#f59e0b", "#ef4444", "#06b6d4", "#10b981", "#6366f1"];
+
+  const topProductsData =
+    stats?.topProducts?.map((tp) => ({ name: tp.product.name, totalSold: tp.totalSold })) || [];
 
   return (
     <div className="space-y-6">
@@ -100,52 +134,98 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Orders
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.pendingOrders || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Orders awaiting processing
-            </p>
+            <div className="text-2xl font-bold">{stats?.pendingOrders || 0}</div>
+            <p className="text-xs text-muted-foreground">Orders awaiting processing</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Today&apos;s Revenue
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ${stats?.todayRevenue?.toLocaleString() || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Revenue generated today
-            </p>
+            <div className="text-2xl font-bold">${stats?.todayRevenue?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">Revenue generated today</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Monthly Revenue
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ${stats?.monthlyRevenue?.toLocaleString() || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Revenue this month
-            </p>
+            <div className="text-2xl font-bold">${stats?.monthlyRevenue?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">Revenue this month</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Revenue</CardTitle>
+          </CardHeader>
+          <CardContent style={{ height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Orders By Status</CardTitle>
+          </CardHeader>
+          <CardContent style={{ height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={70}
+                  label
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={statusColors[index % statusColors.length]} />
+                  ))}
+                </Pie>
+                <Legend verticalAlign="bottom" height={36} />
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Products (Sold)</CardTitle>
+          </CardHeader>
+          <CardContent style={{ height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topProductsData} margin={{ left: -12 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" interval={0} tick={{ fontSize: 12 }} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="totalSold" fill="#6366f1" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

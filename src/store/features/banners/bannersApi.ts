@@ -1,5 +1,5 @@
 import { baseApi } from "@/store/api";
-import { Banner, CreateBannerInput, UpdateBannerInput } from "@/types/banner";
+import { Banner } from "@/types/banner";
 import { T_ApiResponse, T_ApiResponseForPagination } from "@/types";
 
 export const bannersApi = baseApi.injectEndpoints({
@@ -14,46 +14,48 @@ export const bannersApi = baseApi.injectEndpoints({
           page: page.toString(),
           limit: limit.toString(),
         });
-        if (position) params.append('position', position);
-        
+        if (position) params.append("position", position);
+
         return `/banners?${params.toString()}`;
       },
-      providesTags: ['Banners'],
+      providesTags: ["Banners"],
     }),
 
     // Get banner by ID
     getBannerById: builder.query<T_ApiResponse<Banner>, string>({
       query: (id) => `/banners/${id}`,
-      providesTags: ['Banners'],
+      providesTags: ["Banners"],
     }),
 
-    // Create banner
-    createBanner: builder.mutation<T_ApiResponse<Banner>, FormData>({
-      query: (formData) => ({
-        url: '/banners',
-        method: 'POST',
-        body: formData,
+    // Create banner (accept JSON or FormData)
+    createBanner: builder.mutation<T_ApiResponse<Banner>, any>({
+      query: (body) => ({
+        url: "/banners",
+        method: "POST",
+        body,
       }),
-      invalidatesTags: ['Banners'],
+      invalidatesTags: ["Banners"],
     }),
 
-    // Update banner
-    updateBanner: builder.mutation<T_ApiResponse<Banner>, { id: string; formData: FormData }>({
-      query: ({ id, formData }) => ({
-        url: `/banners/${id}`,
-        method: 'PUT',
-        body: formData,
-      }),
-      invalidatesTags: ['Banners'],
-    }),
+    // Update banner (accept JSON or FormData)
+    updateBanner: builder.mutation<T_ApiResponse<Banner>, { id: string; body: any }>(
+      {
+        query: ({ id, body }) => ({
+          url: `/banners/${id}`,
+          method: "PUT",
+          body,
+        }),
+        invalidatesTags: ["Banners"],
+      }
+    ),
 
     // Delete banner
     deleteBanner: builder.mutation<T_ApiResponse<null>, string>({
       query: (id) => ({
         url: `/banners/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Banners'],
+      invalidatesTags: ["Banners"],
     }),
   }),
 });

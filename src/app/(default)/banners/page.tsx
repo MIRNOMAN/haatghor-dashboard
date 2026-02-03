@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useRef } from "react";
@@ -61,18 +62,37 @@ import {
   Trash2,
   Image as ImageIcon,
   Loader2,
-  Upload,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Banner, CreateBannerInput } from "@/types/banner";
 import Image from "next/image";
+import {
+  useUploadSingleImageMutation,
+  useDeleteImageMutation,
+} from "@/store/features/images/imagesApi";
+
+type PositionString = "TOP" | "MIDDLE" | "BOTTOM" | "SIDEBAR";
+
+const positionStringToNumber: Record<PositionString, number> = {
+  TOP: 1,
+  MIDDLE: 2,
+  BOTTOM: 3,
+  SIDEBAR: 4,
+};
+
+const positionNumberToString: Record<number, PositionString> = {
+  1: "TOP",
+  2: "MIDDLE",
+  3: "BOTTOM",
+  4: "SIDEBAR",
+};
 
 export default function BannersPage() {
   const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [editingBanner, setEditingBanner] = useState<any | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,6 +110,10 @@ export default function BannersPage() {
   const [deleteBanner, { isLoading: isDeleting }] = useDeleteBannerMutation();
   const [createBanner, { isLoading: isCreating }] = useCreateBannerMutation();
   const [updateBanner, { isLoading: isUpdating }] = useUpdateBannerMutation();
+  const [uploadSingleImage, { isLoading: isUploading }] =
+    useUploadSingleImageMutation();
+  const [deleteImages, { isLoading: isDeletingImages }] =
+    useDeleteImageMutation();
 
   const banners = data?.data || [];
   const meta = data?.data?.meta;
@@ -110,18 +134,14 @@ export default function BannersPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file");
         return;
       }
-
-      // Validate file size (10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast.error("Image size should not exceed 10MB");
         return;
       }
-
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -134,23 +154,58 @@ export default function BannersPage() {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setFormData((prev) => ({ ...prev, image: "" }));
   };
 
-  const handleOpenDialog = (banner?: Banner) => {
+  const normalizePositionToString = (pos: any): PositionString => {
+    if (typeof pos === "number") {
+      return positionNumberToString[pos] ?? "TOP";
+    }
+    const p = (pos as string)?.toUpperCase();
+    if (p === "TOP" || p === "MIDDLE" || p === "BOTTOM" || p === "SIDEBAR")
+      return p as PositionString;
+    return "TOP";
+  };
+
+  const getPositionBadge = (pos: any) => {
+    const positionKey = normalizePositionToString(pos);
+    const labels: Record<PositionString, string> = {
+      TOP: "Top",
+      MIDDLE: "Middle",
+      BOTTOM: "Bottom",
+      SIDEBAR: "Sidebar",
+    };
+    const colors: Record<PositionString, string> = {
+      TOP: "bg-blue-500",
+      MIDDLE: "bg-purple-500",
+      BOTTOM: "bg-orange-500",
+      SIDEBAR: "bg-green-500",
+    };
+
+    return <Badge className={colors[positionKey] || "bg-gray-500"}>{labels[positionKey]}</Badge>;
+  };
+
+  const getStatusBadge = (isActiveOrStatus: any) => {
+    const active =
+      typeof isActiveOrStatus === "boolean"
+        ? isActiveOrStatus
+        : (isActiveOrStatus as string) === "ACTIVE";
+    return <Badge variant={active ? "default" : "secondary"}>{active ? "Active" : "Inactive"}</Badge>;
+  };
+
+  const handleOpenDialog = (banner?: any) => {
     if (banner) {
       setEditingBanner(banner);
       setImagePreview(banner.image);
       setFormData({
         title: banner.title,
-        description: banner.description || "",
+        description: banner.subtitle ?? banner.description ?? "",
         image: banner.image,
-        link: banner.link || "",
-        position: banner.position,
-        status: banner.status,
-        order: banner.order,
+        link: banner.link ?? "",
+        position: normalizePositionToString(banner.position),
+        status: banner.isActive === false ? "INACTIVE" : banner.status ?? "ACTIVE",
+    
       });
     } else {
       setEditingBanner(null);
@@ -163,7 +218,7 @@ export default function BannersPage() {
         link: "",
         position: "TOP",
         status: "ACTIVE",
-        order: 0,
+        
       });
     }
     setIsDialogOpen(true);
@@ -174,9 +229,7 @@ export default function BannersPage() {
     setEditingBanner(null);
     setImageFile(null);
     setImagePreview("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setFormData({
       title: "",
       description: "",
@@ -184,7 +237,7 @@ export default function BannersPage() {
       link: "",
       position: "TOP",
       status: "ACTIVE",
-      order: 0,
+     
     });
   };
 
@@ -201,30 +254,65 @@ export default function BannersPage() {
       return;
     }
 
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("title", formData.title);
-      if (formData.description)
-        formDataToSend.append("description", formData.description);
-      if (formData.link) formDataToSend.append("link", formData.link);
-      formDataToSend.append("position", formData.position || "TOP");
-      formDataToSend.append("status", formData.status || "ACTIVE");
-      formDataToSend.append("order", formData.order?.toString() || "0");
+    // Validate link if provided (absolute URL)
+    if (formData.link) {
+      try {
+        new URL(formData.link);
+      } catch {
+        toast.error("Link must be a valid absolute URL (https://...)");
+        return;
+      }
+    }
 
+    try {
+      let imageUrl = formData.image || "";
+
+      // Upload file first (if user selected a file)
       if (imageFile) {
-        formDataToSend.append("image", imageFile);
-      } else if (formData.image) {
-        formDataToSend.append("imageUrl", formData.image);
+        const imageUploadForm = new FormData();
+        imageUploadForm.append("image", imageFile);
+        try {
+          const res = await uploadSingleImage(imageUploadForm).unwrap();
+          imageUrl = (res as any)?.data?.url || "";
+          if (!imageUrl) {
+            toast.error("Image upload failed");
+            return;
+          }
+        } catch (err: any) {
+          toast.error(err?.data?.message || "Image upload failed");
+          console.error(err);
+          return;
+        }
       }
 
+      // Map UI position string to numeric code expected by backend
+      const positionNumber =
+        typeof formData.position === "number"
+          ? formData.position
+          : positionStringToNumber[(formData.position as PositionString) || "TOP"];
+
+      // Build payload matching IBanner / IUpdateBanner
+      const payload: any = {
+        title: formData.title,
+        subtitle: formData.description || undefined,
+        image: imageUrl || undefined,
+        link: formData.link || undefined,
+        position: positionNumber,
+        isActive: (formData.status || "ACTIVE") === "ACTIVE",
+        type: (editingBanner?.type as any) ?? "HOME",
+      
+      };
+
+      // Remove undefined keys
+      Object.keys(payload).forEach((k) => {
+        if (payload[k] === undefined) delete payload[k];
+      });
+
       if (editingBanner) {
-        await updateBanner({
-          id: editingBanner.id,
-          formData: formDataToSend,
-        }).unwrap();
+        await updateBanner({ id: editingBanner.id, body: payload }).unwrap();
         toast.success("Banner updated successfully");
       } else {
-        await createBanner(formDataToSend).unwrap();
+        await createBanner(payload).unwrap();
         toast.success("Banner created successfully");
       }
       handleCloseDialog();
@@ -235,36 +323,12 @@ export default function BannersPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    return (
-      <Badge variant={status === "ACTIVE" ? "default" : "secondary"}>
-        {status}
-      </Badge>
-    );
-  };
-
-  const getPositionBadge = (position: string) => {
-    const colors: Record<string, string> = {
-      TOP: "bg-blue-500",
-      MIDDLE: "bg-purple-500",
-      BOTTOM: "bg-orange-500",
-      SIDEBAR: "bg-green-500",
-    };
-
-    return (
-      <Badge className={colors[position] || "bg-gray-500"}>{position}</Badge>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Banners"
         description="Manage promotional banners and advertisements"
-        action={{
-          label: "Add Banner",
-          onClick: () => handleOpenDialog(),
-        }}
+        action={{ label: "Add Banner", onClick: () => handleOpenDialog() }}
       />
 
       {isLoading ? (
@@ -313,10 +377,7 @@ export default function BannersPage() {
           icon={ImageIcon}
           title="No banners found"
           description="Get started by creating your first banner."
-          action={{
-            label: "Add Banner",
-            onClick: () => handleOpenDialog(),
-          }}
+          action={{ label: "Add Banner", onClick: () => handleOpenDialog() }}
         />
       ) : (
         <>
@@ -332,7 +393,7 @@ export default function BannersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {banners?.map((banner) => (
+                {banners?.map((banner: any) => (
                   <TableRow key={banner.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -352,14 +413,14 @@ export default function BannersPage() {
                         <div>
                           <div className="font-medium">{banner.title}</div>
                           <div className="text-sm text-muted-foreground truncate max-w-xs">
-                            {banner.subtitle || "No description"}
+                            {banner.subtitle ?? banner.description ?? "No description"}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>{getPositionBadge(banner.position)}</TableCell>
-                    <TableCell>{banner.subtitle}</TableCell>
-                    <TableCell>{getStatusBadge(banner.type)}</TableCell>
+                    <TableCell>{banner.subtitle ?? banner.description}</TableCell>
+                    <TableCell>{getStatusBadge(banner.isActive ?? banner.status)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -368,18 +429,14 @@ export default function BannersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleOpenDialog(banner)}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                          <DropdownMenuItem onClick={() => handleOpenDialog(banner)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDeleteId(banner.id)}
                             className="text-red-600"
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -391,11 +448,7 @@ export default function BannersPage() {
           </div>
 
           {meta && meta.totalPages > 1 && (
-            <Pagination
-              currentPage={page}
-              totalPages={meta.totalPages}
-              onPageChange={setPage}
-            />
+            <Pagination currentPage={page} totalPages={meta.totalPages} onPageChange={setPage} />
           )}
         </>
       )}
@@ -404,13 +457,9 @@ export default function BannersPage() {
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingBanner ? "Edit Banner" : "Create Banner"}
-            </DialogTitle>
+            <DialogTitle>{editingBanner ? "Edit Banner" : "Create Banner"}</DialogTitle>
             <DialogDescription>
-              {editingBanner
-                ? "Update banner information"
-                : "Add a new promotional banner"}
+              {editingBanner ? "Update banner information" : "Add a new promotional banner"}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -504,11 +553,7 @@ export default function BannersPage() {
                   onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      position: value as
-                        | "TOP"
-                        | "MIDDLE"
-                        | "BOTTOM"
-                        | "SIDEBAR",
+                      position: value as PositionString,
                     })
                   }
                 >
@@ -545,21 +590,7 @@ export default function BannersPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="order">Display Order</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      order: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  placeholder="0"
-                />
-              </div>
+      
             </div>
 
             <DialogFooter>
@@ -570,8 +601,8 @@ export default function BannersPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreating || isUpdating}>
-                {(isCreating || isUpdating) && (
+              <Button type="submit" disabled={isCreating || isUpdating || isUploading}>
+                {(isCreating || isUpdating || isUploading) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 {editingBanner ? "Update" : "Create"}
@@ -587,8 +618,7 @@ export default function BannersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              banner.
+              This action cannot be undone. This will permanently delete the banner.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
