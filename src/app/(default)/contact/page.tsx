@@ -19,21 +19,32 @@ import { MoreHorizontal, Trash2, Mail, Reply, Loader2, Eye } from "lucide-react"
 import { toast } from "sonner";
 import { ContactMessage } from "@/types/contact";
 
+export type ContactStatusFilter = "ALL" | "PENDING" | "READ" | "REPLIED" | "RESOLVED";
+
 export default function ContactPage() {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<ContactStatusFilter>("ALL");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewMessage, setViewMessage] = useState<ContactMessage | null>(null);
   const [replyingTo, setReplyingTo] = useState<ContactMessage | null>(null);
   const [reply, setReply] = useState("");
 
-  const { data, isLoading } = useGetAllContactMessagesQuery({ page, limit: 10, status: statusFilter === "ALL" ? undefined : statusFilter });
+  const backendStatus =
+  statusFilter === "ALL" ? undefined : statusFilter;
+
+
+  const { data, isLoading } = useGetAllContactMessagesQuery({
+  page,
+  limit: 10,
+  status: backendStatus,
+});
+
   const [replyToContact, { isLoading: isReplying }] = useReplyToContactMutation();
   const [updateStatus] = useUpdateContactStatusMutation();
   const [deleteMessage, { isLoading: isDeleting }] = useDeleteContactMessageMutation();
 
-  const messages = data?.data?.result || [];
-  const meta = data?.data?.meta;
+  const messages = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
