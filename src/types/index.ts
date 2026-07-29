@@ -88,6 +88,8 @@ export type TApiResponse<T> = {
   data: T;
 };
 
+export type T_ApiResponse<T> = TApiResponse<T>;
+
 /* ---------- API Response with Pagination ---------- */
 export type TApiResponseMeta = {
   total: number;
@@ -136,13 +138,11 @@ export * from "./image";
 export type T_ApiResponseForPagination<T> = {
   success: boolean;
   message: string;
-  data: {
-    result: T;
-    meta: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+  data: T;
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
   };
 };

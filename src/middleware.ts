@@ -42,6 +42,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)", // protect everything except static files
+    "/((?!api/|generated/|_next/static|_next/image|favicon.ico).*)", // protect dashboard pages but allow API proxy and public media requests
   ],
 };

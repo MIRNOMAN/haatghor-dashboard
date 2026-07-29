@@ -115,8 +115,8 @@ export default function BannersPage() {
   const [deleteImages, { isLoading: isDeletingImages }] =
     useDeleteImageMutation();
 
-  const banners = data?.data || [];
-  const meta = data?.data?.meta;
+  const banners = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleDelete = async () => {
     if (!deleteId) return;

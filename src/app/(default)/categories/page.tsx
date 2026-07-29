@@ -76,8 +76,8 @@ export default function CategoriesPage() {
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [uploadImage, { isLoading: isUploading }] = useUploadSingleImageMutation();
 
-  const categories = Array.isArray(data?.data) ? data.data : (data?.data?.result || []);
-  const meta = data?.meta?.page;
+  const categories = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

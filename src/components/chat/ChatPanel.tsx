@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Plus, Smile, Mic, Loader2, MoreVertical, Phone, Video } from 'lucide-react';
+import { Send, Plus, Smile, Mic, Loader2, MoreVertical, Phone, Video, X } from 'lucide-react';
 import { ChatRoom, Message, useUploadChatFileMutation } from '@/store/features/chat/chatSlice';
 import { useAppSelector } from '@/store/hookts';
 

@@ -50,8 +50,8 @@ export default function ProductsPage() {
   const { data, isLoading } = useGetAllProductsQuery({ page, limit: 10, search });
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
-  const products = data?.data || [];
-  const meta = data?.data?.meta;
+  const products = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleDelete = async () => {
     if (!deleteId) return;

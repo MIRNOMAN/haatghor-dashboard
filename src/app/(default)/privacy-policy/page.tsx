@@ -37,8 +37,8 @@ export default function PrivacyPolicyPage() {
   const [createPolicy, { isLoading: isCreating }] = useCreatePolicyMutation();
   const [updatePolicy, { isLoading: isUpdating }] = useUpdatePolicyMutation();
 
-  const policies = data?.data?.result || [];
-  const meta = data?.data?.meta;
+  const policies = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleDelete = async () => {
     if (!deleteId) return;

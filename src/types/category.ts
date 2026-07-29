@@ -8,6 +8,9 @@ export interface Category {
   parent?: Category;
   children?: Category[];
   productCount?: number;
+  _count?: {
+    products?: number;
+  };
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;

@@ -3,6 +3,7 @@
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetDashboardStatsQuery } from "@/store/features/dashboard/dashboardApi";
+import type { DashboardStats } from "@/types/dashboard";
 import {
   DollarSign,
   ShoppingCart,
@@ -31,7 +32,7 @@ import {
 
 export default function DashboardPage() {
   const { data, isLoading } = useGetDashboardStatsQuery();
-  const stats = data?.data;
+  const stats = data?.data as DashboardStats | undefined;
 
   if (isLoading) {
     return (

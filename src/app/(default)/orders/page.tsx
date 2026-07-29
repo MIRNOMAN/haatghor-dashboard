@@ -61,8 +61,8 @@ export default function OrdersPage() {
   });
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
 
-  const orders = data?.data || [];
-  const meta = data?.data?.meta;
+  const orders = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleStatusChange = async (orderId: string, status: OrderStatus) => {
     try {
@@ -184,7 +184,7 @@ export default function OrdersPage() {
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
                       <TableHead>Final Amount</TableHead>
-                  <TableHead>Total</TableHead>
+                  <TableHead>Subtotal</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
@@ -201,7 +201,7 @@ export default function OrdersPage() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        {order.user?.firstName || "N/A"} {order.user?.lastName || ""}
+                        {order.user?.name || "N/A"}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {order.user?.email || ""}
@@ -209,10 +209,10 @@ export default function OrdersPage() {
                     </TableCell>
                     <TableCell>{formatDate(order.createdAt)}</TableCell>
                      <TableCell className="font-medium">
-                      ${order.finalAmount}
+                      ${order.total}
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${order.totalAmount}
+                      ${order.subtotal}
                     </TableCell>
                     <TableCell>{getStatusBadge(order.status)}</TableCell>
                     <TableCell>{getPaymentStatusBadge(order.paymentStatus)}</TableCell>

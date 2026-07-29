@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Loader2, User, Lock, Bell, Shield } from "lucide-react";
 import { useAppSelector } from "@/store/hookts";
+import { BASEAPI } from "@/utils/baseApi";
 
 export default function SettingsPage() {
   const user = useAppSelector((state) => state.auth.user);
@@ -21,7 +22,7 @@ export default function SettingsPage() {
   const [profileData, setProfileData] = useState({
     name: user?.name || "Admin User",
     email: user?.email || "admin@haatghor.com",
-    phone: user?.phone || "",
+    phone: user?.phoneNumber || "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -35,7 +36,7 @@ export default function SettingsPage() {
     setIsLoadingProfile(true);
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_BASEURL_DEV + "/users/update-profile", {
+      const response = await fetch(BASEAPI() + "/users/update-profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +83,7 @@ export default function SettingsPage() {
     setIsLoadingPassword(true);
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_BASEURL_DEV + "/auth/change-password", {
+      const response = await fetch(BASEAPI() + "/auth/change-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

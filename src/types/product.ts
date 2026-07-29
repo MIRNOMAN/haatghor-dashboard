@@ -4,6 +4,7 @@ export interface Product {
   slug: string;
   description: string;
   price: number;
+  discount?: number;
   discountPrice?: number;
   stock: number;
   categoryId: string;
@@ -14,6 +15,13 @@ export interface Product {
   images: string[];
   thumbnail?: string;
   tags?: string[];
+  specifications?: Record<string, string>;
+  variants?: Array<{
+    name: string;
+    value?: string;
+    price?: number | null;
+    stock?: number | null;
+  }>;
   status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
   ratings?: number;
   reviewCount?: number;

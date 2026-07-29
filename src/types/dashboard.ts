@@ -9,4 +9,22 @@ export interface DashboardStats {
   monthlyRevenue?: number;
   revenueGrowth?: number;
   ordersGrowth?: number;
+  overview?: {
+    totalRevenue: number;
+    totalOrders: number;
+    averageOrderValue: number;
+    totalUsers: number;
+  };
+  monthlySales?: Array<{
+    month: string;
+    revenue: number;
+    orders: number;
+  }>;
+  ordersByStatus?: Record<string, number>;
+  topProducts?: Array<{
+    product: {
+      name: string;
+    };
+    totalSold: number;
+  }>;
 }

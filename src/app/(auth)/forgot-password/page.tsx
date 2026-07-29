@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { BASEAPI } from "@/utils/baseApi";
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +26,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_BASEURL_DEV + "/auth/forgot-password", {
+      const response = await fetch(BASEAPI() + "/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

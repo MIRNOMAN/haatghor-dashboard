@@ -123,8 +123,7 @@ export default function SubscriptionsPage() {
 
       <div className="mt-6 space-y-6">
         <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
+          onSearch={setSearchTerm}
           placeholder="Search by user name or email..."
         />
 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { BASEAPI } from "@/utils/baseApi";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_BASEURL_DEV + "/auth/reset-password", {
+      const response = await fetch(BASEAPI() + "/auth/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

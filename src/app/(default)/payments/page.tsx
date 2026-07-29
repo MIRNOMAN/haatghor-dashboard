@@ -116,8 +116,7 @@ export default function PaymentsPage() {
 
       <div className="mt-6 space-y-6">
         <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
+          onSearch={setSearchTerm}
           placeholder="Search by transaction ID, user, or order..."
         />
 

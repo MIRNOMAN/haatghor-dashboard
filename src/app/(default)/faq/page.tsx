@@ -74,8 +74,8 @@ export default function FAQPage() {
   const [createFAQ, { isLoading: isCreating }] = useCreateFAQMutation();
   const [updateFAQ, { isLoading: isUpdating }] = useUpdateFAQMutation();
 
-  const faqs = data?.data || [];
-  const meta = data?.data?.meta;
+  const faqs = data?.data ?? [];
+  const meta = data?.meta;
 
   const handleDelete = async () => {
     if (!deleteId) return;

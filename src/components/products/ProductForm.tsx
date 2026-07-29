@@ -28,6 +28,7 @@ import {
   useDeleteImageMutation,
 } from "@/store/features/images/imagesApi";
 import { Product } from "@/types/product";
+import type { Image as ImageRecord } from "@/types/image";
 import Image from "next/image";
 
 interface ProductFormProps {
@@ -123,13 +124,13 @@ export function ProductForm({ product, isEdit }: ProductFormProps) {
     try {
       const res = await uploadImages(formDataToUpload).unwrap();
 
-      const newUrls: string[] = Array.isArray(res?.data)
-        ? res.data.map((img: any) => img.url)
+      const newImages = Array.isArray(res?.data)
+        ? res.data.map((img: ImageRecord) => ({ _id: img.id, url: img.url }))
         : [];
 
-      if (newUrls.length === 0) return toast.error("No images returned from server");
+      if (newImages.length === 0) return toast.error("No images returned from server");
 
-      setUploadedImages((prev) => [...prev, ...newUrls]);
+      setUploadedImages((prev) => [...prev, ...newImages]);
       setImageFiles([]);
       toast.success("Images uploaded successfully!");
     } catch (err: any) {
@@ -148,7 +149,7 @@ export function ProductForm({ product, isEdit }: ProductFormProps) {
     if (uploadedImages.length === 0) return toast.error("Please upload at least one image");
 
     // Ensure all string fields are defined
-    const safeSpecifications: Specifications = {};
+    const safeSpecifications: Specifications = { processor: "", ram: "" };
     Object.keys(formData.specifications).forEach((key) => {
       safeSpecifications[key] = formData.specifications[key] || "";
     });

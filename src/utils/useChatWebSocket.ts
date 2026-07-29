@@ -2,22 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAppSelector } from '@/store/hookts';
+import type { Message } from '@/store/features/chat/chatSlice';
 import { BASEAPI } from './baseApi';
-
-interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  roomId: string;
-  createdAt: string;
-  fileUrl?: string[];
-  sender?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    profilePhoto: string | null;
-  };
-}
 
 interface Conversation {
   id: string;
@@ -45,7 +31,7 @@ export function useChatWebSocket() {
   const user = useAppSelector((state) => state.auth.user);
   
   const messageCallbackRef = useRef<((messages: Message[]) => void) | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
 

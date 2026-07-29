@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useAppDispatch } from "@/store/hookts";
 import { setUser } from "@/store/features/auth/authSlice";
 import  Cookies  from "js-cookie";
+import { BASEAPI } from "@/utils/baseApi";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function LoginPage() {
 
     try {
       // Call login API
-      const response = await fetch(process.env.NEXT_PUBLIC_BASEURL_DEV + "/auth/login", {
+      const response = await fetch(BASEAPI() + "/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -60,7 +60,7 @@ export default function ContactPage() {
     }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: ContactStatusFilter) => {
     try {
       await updateStatus({ id, status }).unwrap();
       toast.success("Status updated");
@@ -95,7 +95,7 @@ export default function ContactPage() {
       <PageHeader title="Contact Messages" description="Manage customer inquiries and messages" />
 
       <div className="flex items-center gap-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ContactStatusFilter)}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
@@ -270,15 +270,15 @@ export default function ContactPage() {
                   <p className="text-base">{new Date(viewMessage.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
-              {viewMessage.response && (
+              {viewMessage.reply && (
                 <div className="border-t pt-4">
                   <p className="text-sm font-medium text-muted-foreground mb-2">Response</p>
                   <div className="p-3 bg-muted rounded-md">
-                    <p className="text-base whitespace-pre-wrap">{viewMessage.response}</p>
-                    {viewMessage.respondedBy && (
+                    <p className="text-base whitespace-pre-wrap">{viewMessage.reply}</p>
+                    {viewMessage.repliedBy && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        Responded by {viewMessage.respondedBy} on{" "}
-                        {viewMessage.respondedAt && new Date(viewMessage.respondedAt).toLocaleString()}
+                        Responded by {viewMessage.repliedBy} on{" "}
+                        {viewMessage.repliedAt && new Date(viewMessage.repliedAt).toLocaleString()}
                       </p>
                     )}
                   </div>
@@ -290,7 +290,7 @@ export default function ContactPage() {
             <Button variant="outline" onClick={() => setViewMessage(null)}>
               Close
             </Button>
-            {viewMessage && !viewMessage.response && (
+            {viewMessage && !viewMessage.reply && (
               <Button
                 onClick={() => {
                   setReplyingTo(viewMessage);
